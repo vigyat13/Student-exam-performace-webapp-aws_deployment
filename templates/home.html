@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI-Powered Exam Score Predictor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+      
+      --bg-light: #f8fafc;
+      --bg-dark: #0f0f23;
+      --card-light: rgba(255, 255, 255, 0.95);
+      --card-dark: rgba(30, 30, 60, 0.95);
+      --text-light: #334155;
+      --text-dark: #e2e8f0;
+      --accent-light: #6366f1;
+      --accent-dark: #818cf8;
+      
+      --shadow-light: 0 20px 40px rgba(0, 0, 0, 0.1);
+      --shadow-dark: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --glow: 0 0 30px rgba(99, 102, 241, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-light);
+      color: var(--text-light);
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Animated Background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, #667eea, #764ba2, #f093fb, #f5576c);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+      z-index: -2;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.05"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.08"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+      z-index: -1;
+    }
+
+    .dark-mode {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Floating Elements */
+    .floating-elements {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .floating-circle {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .floating-circle:nth-child(1) {
+      width: 80px;
+      height: 80px;
+      top: 20%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+
+    .floating-circle:nth-child(2) {
+      width: 120px;
+      height: 120px;
+      top: 60%;
+      right: 15%;
+      animation-delay: 2s;
+    }
+
+    .floating-circle:nth-child(3) {
+      width: 60px;
+      height: 60px;
+      bottom: 20%;
+      left: 20%;
+      animation-delay: 4s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    /* Main Container */
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+    }
+
+    .form-container {
+      background: var(--card-light);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      padding: 40px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: var(--shadow-light);
+      position: relative;
+      transform: translateY(20px);
+      opacity: 0;
+      animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dark-mode .form-container {
+      background: var(--card-dark);
+      box-shadow: var(--shadow-dark);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    @keyframes slideUp {
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      opacity: 0.7;
+      font-weight: 400;
+    }
+
+    @keyframes glow {
+      from { filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.3)); }
+      to { filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.6)); }
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: absolute;
+      top: 30px;
+      right: 30px;
+      width: 60px;
+      height: 30px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      position: relative;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+    }
+
+    .theme-toggle::before {
+      content: '🌞';
+      position: absolute;
+      left: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dark-mode .theme-toggle::before {
+      content: '🌙';
+      left: 30px;
+    }
+
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    /* Form Styles */
+    .form-group {
+      position: relative;
+      margin-bottom: 25px;
+      opacity: 0;
+      transform: translateX(-20px);
+      animation: slideInRight 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .form-group:nth-child(1) { animation-delay: 0.1s; }
+    .form-group:nth-child(2) { animation-delay: 0.2s; }
+    .form-group:nth-child(3) { animation-delay: 0.3s; }
+    .form-group:nth-child(4) { animation-delay: 0.4s; }
+    .form-group:nth-child(5) { animation-delay: 0.5s; }
+    .form-group:nth-child(6) { animation-delay: 0.6s; }
+    .form-group:nth-child(7) { animation-delay: 0.7s; }
+
+    @keyframes slideInRight {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: inherit;
+      font-size: 0.95rem;
+      transition: color 0.3s ease;
+    }
+
+    .form-control, .form-select {
+      width: 100%;
+      padding: 16px 20px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      color: inherit;
+      font-size: 16px;
+      font-weight: 500;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .form-control:focus, .form-select:focus {
+      outline: none;
+      border-color: #6366f1;
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .form-control:hover, .form-select:hover {
+      border-color: rgba(99, 102, 241, 0.5);
+      transform: translateY(-1px);
+    }
+
+    /* Number Input Special Effects */
+    .form-control[type="number"] {
+      position: relative;
+    }
+
+    .form-control[type="number"]:focus {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    }
+
+    /* Submit Button */
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      background: var(--primary-gradient);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-top: 20px;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.8s forwards;
+    }
+
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(99, 102, 241, 0.4);
+    }
+
+    .submit-btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .submit-btn:active {
+      transform: translateY(-1px);
+    }
+
+    /* Result Display */
+    .result-container {
+      margin-top: 30px;
+      padding: 25px;
+      background: var(--success-gradient);
+      border-radius: 16px;
+      text-align: center;
+      color: white;
+      font-weight: 600;
+      font-size: 1.2rem;
+      opacity: 0;
+      transform: scale(0.8);
+      animation: resultPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-container::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transform: rotate(45deg);
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes resultPop {
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%) rotate(45deg); }
+      100% { transform: translateX(100%) rotate(45deg); }
+    }
+
+    .result-score {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin: 10px 0;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Progress Indicator */
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary-gradient);
+      width: 0%;
+      border-radius: 2px;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 640px) {
+      .form-container {
+        margin: 10px;
+        padding: 30px 25px;
+      }
+      
+      .title {
+        font-size: 2rem;
+      }
+      
+      .theme-toggle {
+        top: 20px;
+        right: 20px;
+      }
+    }
+
+    /* Loading Animation */
+    .loading {
+      display: none;
+      text-align: center;
+      color: #6366f1;
+    }
+
+    .loading.active {
+      display: block;
+    }
+
+    .spinner {
+      border: 3px solid rgba(99, 102, 241, 0.1);
+      border-radius: 50%;
+      border-top: 3px solid #6366f1;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Validation Styles */
+    .form-control.invalid, .form-select.invalid {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+    }
+
+    .form-control.valid, .form-select.valid {
+      border-color: #10b981;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="floating-elements">
+    <div class="floating-circle"></div>
+    <div class="floating-circle"></div>
+    <div class="floating-circle"></div>
+  </div>
+
+  <button class="theme-toggle" onclick="toggleTheme()"></button>
+
+  <div class="container">
+    <div class="form-container">
+      <div class="header">
+        <h1 class="title">AI Exam Predictor</h1>
+        <p class="subtitle">Predict student performance with advanced ML</p>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <form id="examForm" onsubmit="submitForm(event)">
+        <div class="form-group">
+          <label class="form-label">Gender</label>
+          <select name="gender" class="form-select" required onchange="updateProgress()">
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Race or Ethnicity</label>
+          <select name="ethnicity" class="form-select" required onchange="updateProgress()">
+            <option value="">Select Ethnicity</option>
+            <option value="group A">Group A</option>
+            <option value="group B">Group B</option>
+            <option value="group C">Group C</option>
+            <option value="group D">Group D</option>
+            <option value="group E">Group E</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Parental Education Level</label>
+          <select name="parental_level_of_education" class="form-select" required onchange="updateProgress()">
+            <option value="">Select Education Level</option>
+            <option value="associate's degree">Associate's Degree</option>
+            <option value="bachelor's degree">Bachelor's Degree</option>
+            <option value="high school">High School</option>
+            <option value="master's degree">Master's Degree</option>
+            <option value="some college">Some College</option>
+            <option value="some high school">Some High School</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Lunch Program</label>
+          <select name="lunch" class="form-select" required onchange="updateProgress()">
+            <option value="">Select Lunch Program</option>
+            <option value="free/reduced">Free/Reduced</option>
+            <option value="standard">Standard</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Test Preparation Course</label>
+          <select name="test_preparation_course" class="form-select" required onchange="updateProgress()">
+            <option value="">Select Course Status</option>
+            <option value="none">None</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reading Score (0-100)</label>
+          <input type="number" name="reading_score" class="form-control" min="0" max="100" required onchange="updateProgress()" oninput="validateScore(this)">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Writing Score (0-100)</label>
+          <input type="number" name="writing_score" class="form-control" min="0" max="100" required onchange="updateProgress()" oninput="validateScore(this)">
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">
+          <span>🎯 Predict Math Score</span>
+        </button>
+      </form>
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Analyzing data with AI...</p>
+      </div>
+
+      <div id="result" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script>
+    let isDarkMode = false;
+    
+    function toggleTheme() {
+      isDarkMode = !isDarkMode;
+      document.body.classList.toggle('dark-mode');
+      
+      // Add a nice transition effect
+      const container = document.querySelector('.form-container');
+      container.style.transform = 'scale(0.98)';
+      setTimeout(() => {
+        container.style.transform = 'scale(1)';
+      }, 150);
+    }
+
+    function updateProgress() {
+      const form = document.getElementById('examForm');
+      const fields = form.querySelectorAll('input[required], select[required]');
+      let filledFields = 0;
+      
+      fields.forEach(field => {
+        if (field.value.trim() !== '') {
+          filledFields++;
+          field.classList.remove('invalid');
+          field.classList.add('valid');
+        } else {
+          field.classList.remove('valid');
+        }
+      });
+      
+      const progress = (filledFields / fields.length) * 100;
+      document.getElementById('progressFill').style.width = progress + '%';
+    }
+
+    function validateScore(input) {
+      const value = parseInt(input.value);
+      if (value < 0 || value > 100) {
+        input.classList.add('invalid');
+        input.classList.remove('valid');
+      } else if (input.value !== '') {
+        input.classList.remove('invalid');
+        input.classList.add('valid');
+      }
+    }
+
+    function submitForm(event) {
+      event.preventDefault();
+      
+      // Show loading
+      document.getElementById('loading').classList.add('active');
+      document.getElementById('submitBtn').style.opacity = '0.6';
+      document.getElementById('submitBtn').style.pointerEvents = 'none';
+      
+      // Simulate API call
+      setTimeout(() => {
+        const readingScore = parseInt(document.querySelector('input[name="reading_score"]').value);
+        const writingScore = parseInt(document.querySelector('input[name="writing_score"]').value);
+        
+        // Simple prediction logic (replace with actual API call)
+        const predictedScore = Math.round((readingScore + writingScore) / 2 + Math.random() * 10 - 5);
+        
+        showResult(Math.max(0, Math.min(100, predictedScore)));
+        
+        // Hide loading
+        document.getElementById('loading').classList.remove('active');
+        document.getElementById('submitBtn').style.opacity = '1';
+        document.getElementById('submitBtn').style.pointerEvents = 'auto';
+      }, 2000);
+    }
+
+    function showResult(score) {
+      const resultDiv = document.getElementById('result');
+      let performance = '';
+      let gradient = '';
+      
+      if (score >= 90) {
+        performance = 'Excellent Performance! 🎉';
+        gradient = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+      } else if (score >= 80) {
+        performance = 'Great Job! 🌟';
+        gradient = 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)';
+      } else if (score >= 70) {
+        performance = 'Good Work! 👍';
+        gradient = 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)';
+      } else if (score >= 60) {
+        performance = 'Room for Improvement 📚';
+        gradient = 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)';
+      } else {
+        performance = 'Needs Attention 📖';
+        gradient = 'linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%)';
+      }
+      
+      resultDiv.innerHTML = `
+        <div class="result-container" style="background: ${gradient};">
+          <div>Predicted Math Score</div>
+          <div class="result-score">${score}</div>
+          <div>${performance}</div>
+        </div>
+      `;
+      
+      resultDiv.style.display = 'block';
+    }
+
+    // Initialize progress on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      updateProgress();
+      
+      // Add hover effects to form elements
+      const formElements = document.querySelectorAll('.form-control, .form-select');
+      formElements.forEach(element => {
+        element.addEventListener('focus', function() {
+          this.parentElement.style.transform = 'translateX(5px)';
+        });
+        
+        element.addEventListener('blur', function() {
+          this.parentElement.style.transform = 'translateX(0)';
+        });
+      });
+    });
+
+    // Add particle effect on form submission
+    function createParticles() {
+      for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.style.cssText = `
+          position: fixed;
+          width: 6px;
+          height: 6px;
+          background: linear-gradient(45deg, #667eea, #764ba2);
+          border-radius: 50%;
+          pointer-events: none;
+          z-index: 1000;
+          left: 50%;
+          top: 50%;
+          animation: particle 1s ease-out forwards;
+        `;
+        
+        particle.style.setProperty('--random-x', (Math.random() - 0.5) * 400 + 'px');
+        particle.style.setProperty('--random-y', (Math.random() - 0.5) * 400 + 'px');
+        
+        document.body.appendChild(particle);
+        
+        setTimeout(() => particle.remove(), 1000);
+      }
+    }
+
+    // Add particle animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes particle {
+        to {
+          transform: translate(var(--random-x), var(--random-y));
+          opacity: 0;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>
